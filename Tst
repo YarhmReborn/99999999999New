@@ -1,13 +1,31 @@
 -- Advanced security script for Roblox
--- Prevents execution if third-party attacks are detected
+-- Masks all URLs, variable names, and values to prevent leaks while whitelisting specific loadstrings
+
+local whitelist = {
+    ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Basketball"] = true,
+    ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Blue"] = true,
+    ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Repo"] = true
+}
+
+local oldLoadstring
+oldLoadstring = hookfunction(loadstring, newcclosure(function(code, ...)
+    if type(code) == "string" then
+        for url in code:gmatch("https?://[^"]+") do
+            if not whitelist[url] then
+                while true do end -- Infinite loop to lag unauthorized scripts
+            end
+        end
+    end
+    return oldLoadstring(code, ...)
+end))
 
 if game:GetService("RunService"):IsClient() then
     for _, script in ipairs(game:GetDescendants()) do
         if script:IsA("LocalScript") or script:IsA("ModuleScript") or script:IsA("Script") then
-            if script.Source:find("loadstring") then
-                error("Unauthorized script detected. Execution halted.")
-                return
-            end
+            script.Source = script.Source:gsub("https?://[%w%p]+", function(url)
+                return whitelist[url] and url or "https://hello"
+            end)
+            script.Source = script.Source:gsub("[%a_][%w_]*", "hello")
         end
     end
 end
@@ -19,7 +37,9 @@ local functions = {
     rconsoleerr,
     rconsolewarn,
     warn,
-    error
+    error,
+    game.HttpGet,
+    game.HttpGetAsync
 }
 
 for i, v in next, functions do
@@ -27,36 +47,40 @@ for i, v in next, functions do
     old = hookfunction(v, newcclosure(function(...)
         local args = {...}
         for i, v in next, args do
-            if tostring(i):find("https") or tostring(v):find("https") then
-                error("Suspicious activity detected. Execution halted.")
-                return
+            if type(v) == "string" then
+                if v:find("https?://") then
+                    args[i] = whitelist[v] and v or "https://hello" -- Mask non-whitelisted URLs
+                else
+                    args[i] = "hello" -- Mask variables and values
+                end
+            elseif type(v) == "number" then
+                args[i] = "hello" -- Mask numeric values
             end
         end
-        return old(...)
+        return old(table.unpack(args))
     end))
 end
 
 if _G.ID then
-    error("Unauthorized modification detected. Execution halted.")
-    return
+    _G.ID = "hello" -- Mask global ID
 end
 
 setmetatable(_G, {
     __newindex = function(t, i, v)
-        if tostring(i) == "ID" then
-            error("Unauthorized modification detected. Execution halted.")
-            return
-        end
+        rawset(t, "hello", "hello") -- Mask new variables
+    end,
+    __index = function(t, i)
+        return "hello" -- Return masked values
     end
 })
 
--- Prevent execution of new scripts containing 'loadstring'
+-- Prevent execution of new scripts and mask contents
 game.DescendantAdded:Connect(function(descendant)
     if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") or descendant:IsA("Script") then
-        if descendant.Source:find("loadstring") then
-            error("Unauthorized script detected. Execution halted.")
-            return
-        end
+        descendant.Source = descendant.Source:gsub("https?://[%w%p]+", function(url)
+            return whitelist[url] and url or "https://hello"
+        end)
+        descendant.Source = descendant.Source:gsub("[%a_][%w_]*", "hello")
     end
 end)
 
