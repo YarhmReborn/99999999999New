@@ -1,0 +1,497 @@
+local Tab = Window:CreateTab({
+    Name = "Blue Lock: Rivals",
+    Icon = "sports_soccer",
+    ImageSource = "Material",
+    ShowTitle = true
+})
+
+local Tab2 = Window:CreateTab({
+    Name = "Basketball: Zero",
+    Icon = "sports_basketball",
+    ImageSource = "Material",
+    ShowTitle = true
+})
+
+local Tab3 = Window:CreateTab({
+    Name = "[NEW!] E.R.P.O",
+    Icon = "lightbulb",
+    ImageSource = "Material",
+    ShowTitle = true
+})
+
+local DecreaseStamina = game:GetService("ReplicatedStorage"):WaitForChild("Packages")
+    :WaitForChild("Knit"):WaitForChild("Services")
+    :WaitForChild("StaminaService"):WaitForChild("RE")
+    :WaitForChild("DecreaseStamina")
+
+local namecall
+namecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod():lower()
+
+    if not checkcaller() and self == DecreaseStamina and method == "fireserver" then
+        return nil -- Blocks the remote from firing
+    end
+    
+    return namecall(self, ...)
+end)
+
+if not getgenv().AutoDribbleSettings then
+    getgenv().AutoDribbleSettings = {
+        Enabled = false, -- Starts OFF
+        range = 30
+    }
+end
+
+local S, R, P, U = getgenv().AutoDribbleSettings, game:GetService("ReplicatedStorage"), game:GetService("Players"), game:GetService("RunService")
+local L = P.LocalPlayer or P.PlayerAdded:Wait()
+local function i()
+    local c = L.Character or L.CharacterAdded:Wait()
+    return c, c:WaitForChild("HumanoidRootPart"), c:WaitForChild("Humanoid")
+end
+local C, H, M = i()
+L.CharacterAdded:Connect(function()
+    C, H, M = i()
+end)
+local B = R.Packages.Knit.Services.BallService.RE.Dribble
+local A = require(R.Assets.Animations)
+local StaminaService = R.Packages.Knit.Services.StaminaService.RE.DecreaseStamina
+
+local G = function(s)
+    if A.Dribbles[s] then
+        local a = Instance.new("Animation")
+        a.AnimationId = A.Dribbles[s]
+        return M:LoadAnimation(a)
+    end
+end
+
+local T = function(p)
+    if p ~= L and p.Character then
+        local c = p.Character
+        local v = c.Values and c.Values.Sliding
+        local h = c:FindFirstChildOfClass("Humanoid")
+        return (v and v.Value) or (h and h.MoveDirection.Magnitude > 0 and h.WalkSpeed == 0)
+    end
+end
+
+local O = function(p)
+    return L.Team and p.Team and L.Team ~= p.Team
+end
+
+local D = function(d)
+    if S.Enabled and C.Values and C.Values.HasBall.Value then
+
+        B:FireServer(unpack(args)) -- Updated FireServer with new argument
+        
+        local s = L.PlayerStats.Style.Value
+        local t = G(s)
+        if t then
+            t:Play()
+            t:AdjustSpeed(math.clamp(1 + (10 - d) / 10, 1, 2))
+        end
+        local f = workspace:FindFirstChild("Football")
+        if f then
+            f.AssemblyLinearVelocity = Vector3.new()
+            f.CFrame = H.CFrame * CFrame.new(0, -2.5, 0)
+        end
+    end
+end
+
+U.Heartbeat:Connect(function()
+    if S.Enabled and C and H then
+        for _, p in pairs(P:GetPlayers()) do
+            if O(p) and T(p) then
+                local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+                if r then
+                    local d = (r.Position - H.Position).Magnitude
+                    if d < S.range then
+                        D(d)
+                        break
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Add Auto Dribble Toggle Inside Luna UI
+Tab:CreateToggle({
+    Name = "Auto Dribble V2",
+    Description = "Automatically dribbles when in range",
+    Default = false,
+    Callback = function(state)
+        S.Enabled = state  -- Toggle Auto Dribble
+
+        if state then
+            -- Set Stamina to infinite
+            if L and L.PlayerStats and L.PlayerStats.Stamina then
+                L.PlayerStats.Stamina.Value = math.huge
+            end
+        else
+            -- Reset Stamina
+            if L and L.PlayerStats and L.PlayerStats.Stamina then
+                L.PlayerStats.Stamina.Value = 100
+            end
+        end
+    end
+})
+
+local Slider = Tab:CreateSlider({
+    Name = "Dribble Range",
+    Range = {1, 70}, -- Fixed range
+    Increment = 1,
+    CurrentValue = 30,
+    Callback = function(Value)
+        S.range = Value
+    end
+}, "Slider")
+
+        Luna:Notification({ 
+            Title = "Welcome to Shinzou Hub!",
+            Icon = "notifications_active",
+            ImageSource = "Material",
+            Content = "Key Verified!"
+        })
+
+local Label = Tab:CreateLabel({
+	Text = "Hitbox Expander",
+	Style = 2 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+
+local player = game.Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Variables
+local hitboxEnabled = false
+local hitboxSize = 10
+local connection
+
+-- Function to update the LocalPlayer's hitbox
+local function ApplyHitbox()
+    local character = player.Character or player.CharacterAdded:Wait()
+    if character then
+        local hitbox = character:FindFirstChild("Hitbox")
+        
+        if hitbox then
+            hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+            hitbox.Transparency = 0.8
+            hitbox.BrickColor = BrickColor.Red()
+        end
+    end
+end
+
+-- Function to update the Football's hitbox
+local function ApplyFootballHitbox()
+    local football = workspace:FindFirstChild("Football")
+    if football then
+        local footballHitbox = football:FindFirstChild("Hitbox")
+
+        if footballHitbox then
+            footballHitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+            footballHitbox.Transparency = 0.7
+            footballHitbox.BrickColor = BrickColor.Red()
+        end
+    end
+end
+
+-- Function to update both hitboxes
+local function UpdateHitboxes()
+    if hitboxEnabled then
+        ApplyHitbox()
+        ApplyFootballHitbox()
+    end
+end
+
+-- UI Integration
+local Toggle = Tab:CreateToggle({
+    Name = "Hitbox Expander",
+    CurrentValue = false,
+    Callback = function(Value)
+        hitboxEnabled = Value
+
+        if hitboxEnabled then
+            connection = RunService.RenderStepped:Connect(UpdateHitboxes)
+        else
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end
+    end
+}, "Toggle")
+
+local Slider = Tab:CreateSlider({
+    Name = "Hitbox Size",
+    Range = {1, 24.5}, -- Fixed range
+    Increment = 1,
+    CurrentValue = 10,
+    Callback = function(Value)
+        hitboxSize = Value
+        if hitboxEnabled then
+            UpdateHitboxes()
+        end
+    end
+}, "Slider")
+
+local Label = Tab:CreateLabel({
+	Text = "Style & Flow Changer",
+	Style = 2 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+
+local Label = Tab:CreateLabel({
+	Text = "Best If You Use Rin Style.",
+	Style = 2 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+
+local userlocal = game.Players.LocalPlayer  -- Get the local player
+
+local Button = Tab:CreateButton({
+    Name = "Kaiser",
+    Description = nil,
+    Callback = function()
+        local styleValue = userlocal:FindFirstChild("PlayerStats") and userlocal.PlayerStats:FindFirstChild("Style")
+        if styleValue then
+            styleValue.Value = "Kaiser"
+        end
+    end
+})
+
+local Button = Tab:CreateButton({
+    Name = "Don Lorenzo",
+    Description = nil,
+    Callback = function()
+        local styleValue = userlocal:FindFirstChild("PlayerStats") and userlocal.PlayerStats:FindFirstChild("Style")
+        if styleValue then
+            styleValue.Value = "Don Lorenzo"
+        end
+    end
+})
+
+local Button = Tab:CreateButton({
+    Name = "Sae",
+    Description = nil,
+    Callback = function()
+        local styleValue = userlocal:FindFirstChild("PlayerStats") and userlocal.PlayerStats:FindFirstChild("Style")
+        if styleValue then
+            styleValue.Value = "Sae"
+        end
+    end
+})
+
+local Button = Tab:CreateButton({
+    Name = "NEL Isagi",
+    Description = nil,
+    Callback = function()
+        local styleValue = userlocal:FindFirstChild("PlayerStats") and userlocal.PlayerStats:FindFirstChild("Style")
+        if styleValue then
+            styleValue.Value = "NEL Isagi"
+        end
+    end
+})
+
+local Button = Tab:CreateButton({
+	Name = "Emperor's Dribble [No Effects Yet]",
+	Description = "Will be putted inside your abilities once clicke Made By: Shinzou", -- Creates A Description For Users to know what the button does (looks bad if you use it all the time),
+    	Callback = function()
+         local player = game:GetService("Players").LocalPlayer
+local abilitiesFrame = player:WaitForChild("PlayerGui"):WaitForChild("InGameUI"):WaitForChild("Bottom"):WaitForChild("Abilities")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local animator = humanoid:FindFirstChild("Animator") or Instance.new("Animator", humanoid)
+local tweenService = game:GetService("TweenService")
+
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local animation = replicatedStorage:WaitForChild("Assets"):WaitForChild("ReplicatedAnims"):WaitForChild("Abilities"):WaitForChild("KaiserDribbleZigZag")
+
+local loadedAnimation = animator:LoadAnimation(animation)
+
+-- Load Sound
+local kaiserDribbleSound = game:GetService("ReplicatedStorage").Assets.Sfx.KaiserDribble
+
+local originalButton = abilitiesFrame:FindFirstChild("1")
+if originalButton and originalButton:IsA("ImageButton") then
+    -- Clone for Emperor's Dribble
+    local emperorButton = originalButton:Clone()
+    emperorButton.Parent = abilitiesFrame
+    emperorButton.Name = "Emperor's Dribble"
+
+    local emperorTimer = emperorButton:FindFirstChild("Timer")
+    if emperorTimer and emperorTimer:IsA("TextLabel") then
+        emperorTimer.Text = "Emperor's Dribble"
+    end
+
+    local emperdrib = false -- Cooldown tracking
+
+    local function moveCharacter(targetCFrame, duration)
+        local tween = tweenService:Create(humanoidRootPart, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+        tween:Play()
+        return tween
+    end
+
+    local function performEmperorDribble()
+        if emperdrib then return end -- Prevent activation if on cooldown
+        emperdrib = true
+
+        -- Play animation & sound
+        loadedAnimation:Play()
+        kaiserDribbleSound.Volume = 5
+        kaiserDribbleSound:Play()
+
+        local originalCFrame = humanoidRootPart.CFrame
+
+        -- Step 1: Rotate left (55 degrees)
+        moveCharacter(originalCFrame * CFrame.Angles(0, math.rad(55), 0), 0.2).Completed:Wait()
+    
+        -- Step 2: Move forward 30 studs
+        moveCharacter(humanoidRootPart.CFrame * CFrame.new(0, 0, -30), 0.1).Completed:Wait()
+    
+        -- Step 3: Rotate right (-110 degrees)
+        moveCharacter(humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(-110), 0), 0.2).Completed:Wait()
+    
+        -- Step 4: Move forward 30 studs
+        moveCharacter(humanoidRootPart.CFrame * CFrame.new(0, 0, -30), 0.1).Completed:Wait()
+    
+        -- Step 5: Rotate left (110 degrees)
+        moveCharacter(humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(110), 0), 0.2).Completed:Wait()
+    
+        -- Step 6: Move forward 30 studs
+        moveCharacter(humanoidRootPart.CFrame * CFrame.new(0, 0, -30), 0.1).Completed:Wait()
+
+        -- Stop animation
+        loadedAnimation:Stop()
+
+        -- Start Cooldown Countdown
+        for i = 5, 0, -1 do
+            emperorTimer.Text = "Cooldown: " .. i .. "s"
+            wait(1)
+        end
+
+        emperorTimer.Text = "Emperor's Dribble"
+        emperdrib = false
+    end
+
+    emperorButton.MouseButton1Click:Connect(function()
+        if not emperdrib then
+            performEmperorDribble()
+        end
+    end)
+end
+
+Luna:Notification({ 
+	Title = "Shinzou Hub",
+	Icon = "sports_soccer",
+	ImageSource = "Material",
+	Content = "Loaded Emperor's Dribble!"
+})
+
+    	end
+})
+
+local Label = Tab:CreateLabel({
+	Text = "Flow Changer",
+	Style =  1 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+
+local Button = Tab:CreateButton({
+    Name = "Awakened Genius",
+    Description = nil,
+    Callback = function()
+        local styleValue = userlocal:FindFirstChild("PlayerStats") and userlocal.PlayerStats:FindFirstChild("Flow")
+        if styleValue then
+            styleValue.Value = "Awakened Genius"
+        end
+    end
+})
+
+local Button = Tab:CreateButton({
+    Name = "Soul Harvester",
+    Description = nil,
+    Callback = function()
+        local styleValue = userlocal:FindFirstChild("PlayerStats") and userlocal.PlayerStats:FindFirstChild("Flow")
+        if styleValue then
+            styleValue.Value = "Soul Harvester"
+        end
+    end
+})
+
+local Label = Tab:CreateLabel({
+	Text = "NEW ADDED!",
+	Style =  2 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+
+local Label = Tab:CreateLabel({
+	Text = "Recreated By: Shinzou | If it has error just use the original one",
+	Style =  3 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+
+local Button = Tab:CreateButton({
+            Name = "Control Ball [RECREATION]",
+            Description = nil,
+            Callback = function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/RedJDarks/MAIN/refs/heads/main/ControlRecreate"))()
+            end
+        })
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local SlideRemote = ReplicatedStorage.Packages.Knit.Services.BallService.RE.Slide
+
+local function IsInGame()
+    return LocalPlayer and LocalPlayer.Character
+end
+
+local function buttontoggleclic()
+    if not IsInGame() then return end
+
+    local LocalCharacter = LocalPlayer.Character
+    local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+    local Football = workspace:FindFirstChild("Football")
+
+    if LocalHumanoidRootPart and Football and Football.Char.Value ~= LocalPlayer.Character then
+        LocalHumanoidRootPart.CFrame = Football.CFrame
+    end
+
+    for _, OtherPlayer in ipairs(Players:GetPlayers()) do
+        if OtherPlayer ~= LocalPlayer and OtherPlayer.Team ~= LocalPlayer.Team then
+            local OtherCharacter = OtherPlayer.Character
+            local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Football")
+            local OtherHRP = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+
+            if OtherFootball and OtherHRP and LocalHumanoidRootPart then
+                LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                SlideRemote:FireServer()
+                break
+            end
+        end
+    end
+end
+
+local running = false  -- Variable to track toggle state
+local toggleLoop
+
+local Toggle = Tab:CreateToggle({
+    Name = "Auto Steal Ball [NEW]",
+    Description = "Automatically steals the ball from others when taken.",
+    CurrentValue = false,
+    Callback = function(Value)
+        running = Value  -- Update toggle state
+
+        if running then
+            toggleLoop = task.spawn(function()
+                while running do
+                    buttontoggleclic()
+                    task.wait(0.5)  -- Adjust interval if needed
+                end
+            end)
+        else
+            if toggleLoop then
+                task.cancel(toggleLoop)  -- Stop loop safely
+                toggleLoop = nil
+            end
+        end
+    end
+}, "Toggle")
