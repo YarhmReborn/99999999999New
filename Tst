@@ -1,52 +1,46 @@
-local allowed_script = getfenv(2) -- Capture the environment of your script
+local allowed_script = getfenv(2) -- Capture the environment of the allowed script
 
--- Store original functions
-local original_functions = {
-    writefile = writefile,
-    readfile = readfile,
-    delfile = delfile,
-    appendfile = appendfile,
-    makefolder = makefolder,
-    delfolder = delfolder,
-    listfiles = listfiles,
-    isfile = isfile,
-    isfolder = isfolder
-}
-
--- Function to detect unauthorized scripts
+-- Function to check if a script is unauthorized
 local function isUnauthorized()
     local callerEnv = getfenv(2)
-    return callerEnv ~= allowed_script and not rawget(callerEnv, "shinzouvalid") 
+    return callerEnv ~= allowed_script and not rawget(callerEnv, "shinzouvalid")
 end
 
--- Hook functions to prevent external use
+-- Function to prevent entry or induce error for unauthorized scripts
+local function blockUnauthorized()
+    error("Third-party script detected. Access denied.", 0)
+    return end
+
+-- Hook filesystem functions to prevent unauthorized access
+local original_functions = {
+    writefile, readfile, delfile, appendfile, makefolder,
+    delfolder, listfiles, isfile, isfolder
+}
+
 if hookfunction then
-    for name, func in pairs(original_functions) do
+    for _, func in ipairs(original_functions) do
         if func then
             hookfunction(func, newcclosure(function(...)
-                if isUnauthorized() then
-                    while true do end -- Cause infinite lag
-                end
+                if isUnauthorized() then blockUnauthorized() end
                 return func(...)
             end))
         end
     end
 end
 
--- Prevent unwanted global variable modifications
-if _G.ID then
-    while true do end -- Infinite loop to lag unauthorized scripts
-end
-
+-- Prevent modification of a specific global variable
 setmetatable(_G, {
     __newindex = function(t, i, v)
         if tostring(i) == "ID" then
-            while true do end -- Block execution for unauthorized scripts
+            blockUnauthorized()
         else
             rawset(t, i, v) -- Allow other global modifications
         end
     end
 })
+
+-- Extra protection against direct script modification
+if _G.ID then blockUnauthorized() end
 
 --! json library
 --! cryptography library
@@ -310,6 +304,7 @@ local getFlag = function(name)
     end
 end
 
+local shinzouvalid
 local HttpService = game:GetService("HttpService")
 local keyFile = "key.json"
 
