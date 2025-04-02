@@ -1,0 +1,224 @@
+local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/RedJDarks/MAIN/refs/heads/main/Ui", true))()
+
+        local Window = Luna:CreateWindow({
+            Name = "Shinzou Hub",
+            Subtitle = nil,
+            LogoID = "82795327169782",
+            LoadingEnabled = true,
+            LoadingTitle = "Loading..",
+            LoadingSubtitle = "By Shinzou",
+            ConfigSettings = {
+                RootFolder = nil,
+                ConfigFolder = "Shinzou Hub"
+            },
+            KeySystem = false, -- **Luna's Key System enabled**
+            KeySettings = {
+                Title = "Shinzou Hub Key",
+                Subtitle = "Second Key System",
+                Note = "This is the second layer of security. Use the correct key!",
+                SaveInRoot = false,
+                SaveKey = true,
+                Key = {"Example Key"},
+                SecondAction = {
+                    Enabled = true,
+                    Type = "Link",
+                    Parameter = AdLink
+                }
+            }
+        })
+
+Window:CreateHomeTab({
+	SupportedExecutors = {},
+	DiscordInvite = "jdark", -- The Discord Invite Link. Do Not Include discord.gg/ | Only Include the code.
+	Icon = 1, -- By Default, The Icon Is The Home Icon. If You would like to change it to dashboard, replace the interger with 2
+})
+
+local Tab = Window:CreateTab({
+    Name = "[NEW!] E.R.P.O",
+    Icon = "lightbulb",
+    ImageSource = "Material",
+    ShowTitle = true
+})
+
+local Button = Tab:CreateButton({
+	Name = "Teleport To Cart",
+	Description = nil,
+	Callback = function()
+		if workspace.Cart:FindFirstChild("MoneyCart") then
+			workspace.Cart.MoneyCart.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+		end
+	end
+})
+
+local autoRefreshEnabled = false
+
+local function applyOutline(instance, color, textColor)
+    local rootPart = nil
+    if instance:IsA("Model") then
+        if instance:FindFirstChildOfClass("Highlight") then return end
+        rootPart = instance.PrimaryPart or instance:FindFirstChildWhichIsA("BasePart")
+    elseif instance:IsA("MeshPart") then
+        if instance:FindFirstChildOfClass("Highlight") then return end
+        rootPart = instance
+    end
+    
+    if rootPart then
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = instance
+        highlight.FillTransparency = 1
+        highlight.OutlineColor = color
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+
+        local billboard = Instance.new("BillboardGui")
+        billboard.Parent = rootPart
+        billboard.Size = UDim2.new(0, 100, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
+        billboard.MaxDistance = math.huge
+
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Parent = billboard
+        textLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = textColor
+        textLabel.TextScaled = true
+        textLabel.Font = Enum.Font.FredokaOne
+        textLabel.Text = instance.Name
+
+        local distanceLabel = Instance.new("TextLabel")
+        distanceLabel.Parent = billboard
+        distanceLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        distanceLabel.Position = UDim2.new(0, 0, 0.5, 0)
+        distanceLabel.BackgroundTransparency = 1
+        distanceLabel.TextColor3 = textColor
+        distanceLabel.TextScaled = true
+        distanceLabel.Font = Enum.Font.FredokaOne
+
+        task.spawn(function()
+            while billboard.Parent do
+                task.wait(0.1)
+                if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude
+                    distanceLabel.Text = string.format("%.1f meters", distance)
+                end
+            end
+        end)
+    end
+end
+
+local function removeOutlines(parent)
+    for _, child in ipairs(parent:GetChildren()) do
+        if child:IsA("Model") or child:IsA("MeshPart") then
+            for _, descendant in ipairs(child:GetDescendants()) do
+                if descendant:IsA("Highlight") or descendant:IsA("BillboardGui") then
+                    descendant:Destroy()
+                end
+            end
+        end
+    end
+end
+
+local function refreshOutlines()
+    if ToggleEnemy.CurrentValue and workspace:FindFirstChild("Spawned Enemies") then
+        for _, enemy in ipairs(workspace["Spawned Enemies"]:GetChildren()) do
+            if enemy:IsA("Model") then
+                applyOutline(enemy, Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 0, 0))
+            end
+        end
+    end
+    
+    if ToggleItems.CurrentValue and workspace:FindFirstChild("Spawned Loot") then
+        for _, item in ipairs(workspace["Spawned Loot"]:GetChildren()) do
+            if item:IsA("MeshPart") then
+                applyOutline(item, Color3.fromRGB(0, 0, 255), Color3.fromRGB(0, 0, 255))
+            end
+        end
+    end
+end
+
+local function autoRefresh()
+    while autoRefreshEnabled do
+        refreshOutlines()
+        task.wait(2)
+    end
+end
+
+task.spawn(function()
+    while true do
+        if autoRefreshEnabled then
+            refreshOutlines()
+        end
+        task.wait(2)
+    end
+end)
+
+ToggleEnemy = Tab:CreateToggle({
+    Name = "Show Enemy",
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then
+            refreshOutlines()
+        else
+            removeOutlines(workspace["Spawned Enemies"])
+        end
+    end
+})
+
+ToggleItems = Tab:CreateToggle({
+    Name = "Show All Items",
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then
+            refreshOutlines()
+        else
+            removeOutlines(workspace["Spawned Loot"])
+        end
+    end
+})
+
+ToggleAutoRefresh = Tab:CreateToggle({
+    Name = "Auto Refresh",
+    CurrentValue = false,
+    Callback = function(Value)
+        autoRefreshEnabled = Value
+        if autoRefreshEnabled then
+            task.spawn(autoRefresh)
+        end
+    end
+})
+
+local Label = Tab:CreateLabel({
+	Text = "Arise from the dead",
+	Style = 2 -- Luna Labels Have 3 Styles : A Basic Label, A Green Information Label and A Red Warning Label. Look At The Following Image For More Details
+})
+
+local function updatePlayerList()
+	local playerNames = {}
+	for _, player in ipairs(game.Players:GetPlayers()) do
+		table.insert(playerNames, player.Name)
+	end
+	return playerNames
+end
+
+local Dropdown = Tab:CreateDropdown({
+	Name = "Revive Players",
+	Description = "Select a Player to get revived.",
+	Options = updatePlayerList(),
+	CurrentOption = nil,
+	MultipleOptions = false,
+	SpecialType = nil,
+	Callback = function(SelectedPlayer)
+		local targetPlayer = game.Players:FindFirstChild(SelectedPlayer)
+		if targetPlayer then
+			game:GetService("ReplicatedStorage").Remotes.RevivePlayer:FireServer(targetPlayer.UserId)
+		end
+	end
+})
+   
+game.Players.PlayerAdded:Connect(function()
+	Dropdown.Options = updatePlayerList()
+end)
+
+game.Players.PlayerRemoving:Connect(function()
+	Dropdown.Options = updatePlayerList()
+end)
