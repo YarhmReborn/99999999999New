@@ -1,46 +1,64 @@
-local allowed_script = getfenv(2) -- Capture the environment of the allowed script
+-- Advanced security script for Roblox
+-- Prevents execution if third-party attacks are detected
 
--- Function to check if a script is unauthorized
-local function isUnauthorized()
-    local callerEnv = getfenv(2)
-    return callerEnv ~= allowed_script and not rawget(callerEnv, "shinzouvalid")
-end
-
--- Function to prevent entry or induce error for unauthorized scripts
-local function blockUnauthorized()
-    error("Third-party script detected. Access denied.", 0)
-    return end
-
--- Hook filesystem functions to prevent unauthorized access
-local original_functions = {
-    writefile, readfile, delfile, appendfile, makefolder,
-    delfolder, listfiles, isfile, isfolder
-}
-
-if hookfunction then
-    for _, func in ipairs(original_functions) do
-        if func then
-            hookfunction(func, newcclosure(function(...)
-                if isUnauthorized() then blockUnauthorized() end
-                return func(...)
-            end))
+if game:GetService("RunService"):IsClient() then
+    for _, script in ipairs(game:GetDescendants()) do
+        if script:IsA("LocalScript") or script:IsA("ModuleScript") or script:IsA("Script") then
+            if script.Source:find("loadstring") then
+                error("Unauthorized script detected. Execution halted.")
+                return
+            end
         end
     end
 end
 
--- Prevent modification of a specific global variable
+local functions = {
+    rconsoleprint,
+    print,
+    setclipboard,
+    rconsoleerr,
+    rconsolewarn,
+    warn,
+    error
+}
+
+for i, v in next, functions do
+    local old
+    old = hookfunction(v, newcclosure(function(...)
+        local args = {...}
+        for i, v in next, args do
+            if tostring(i):find("https") or tostring(v):find("https") then
+                error("Suspicious activity detected. Execution halted.")
+                return
+            end
+        end
+        return old(...)
+    end))
+end
+
+if _G.ID then
+    error("Unauthorized modification detected. Execution halted.")
+    return
+end
+
 setmetatable(_G, {
     __newindex = function(t, i, v)
         if tostring(i) == "ID" then
-            blockUnauthorized()
-        else
-            rawset(t, i, v) -- Allow other global modifications
+            error("Unauthorized modification detected. Execution halted.")
+            return
         end
     end
 })
 
--- Extra protection against direct script modification
-if _G.ID then blockUnauthorized() end
+-- Prevent execution of new scripts containing 'loadstring'
+game.DescendantAdded:Connect(function(descendant)
+    if descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") or descendant:IsA("Script") then
+        if descendant.Source:find("loadstring") then
+            error("Unauthorized script detected. Execution halted.")
+            return
+        end
+    end
+end)
 
 --! json library
 --! cryptography library
