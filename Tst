@@ -83,7 +83,7 @@ game.DescendantAdded:Connect(function(descendant)
         end)
         descendant.Source = descendant.Source:gsub("[%a_][%w_]*", "hello")
     end
-end
+end)
 
 --! json library
 --! cryptography library
