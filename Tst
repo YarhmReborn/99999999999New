@@ -4,7 +4,8 @@
 local whitelist = {
     ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Basketball"] = true,
     ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Blue"] = true,
-    ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Repo"] = true
+    ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Repo"] = true,
+    ["https://raw.githubusercontent.com/YarhmReborn/99999999999New/refs/heads/main/Tst"] = true
 }
 
 local oldLoadstring
@@ -82,7 +83,7 @@ game.DescendantAdded:Connect(function(descendant)
         end)
         descendant.Source = descendant.Source:gsub("[%a_][%w_]*", "hello")
     end
-end)
+end
 
 --! json library
 --! cryptography library
