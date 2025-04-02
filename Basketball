@@ -1,0 +1,82 @@
+local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/RedJDarks/MAIN/refs/heads/main/Ui", true))()
+
+        local Window = Luna:CreateWindow({
+            Name = "Shinzou Hub",
+            Subtitle = nil,
+            LogoID = "82795327169782",
+            LoadingEnabled = true,
+            LoadingTitle = "Loading..",
+            LoadingSubtitle = "By Shinzou",
+            ConfigSettings = {
+                RootFolder = nil,
+                ConfigFolder = "Shinzou Hub"
+            },
+            KeySystem = false, -- **Luna's Key System enabled**
+            KeySettings = {
+                Title = "Shinzou Hub Key",
+                Subtitle = "Second Key System",
+                Note = "This is the second layer of security. Use the correct key!",
+                SaveInRoot = false,
+                SaveKey = true,
+                Key = {"Example Key"},
+                SecondAction = {
+                    Enabled = true,
+                    Type = "Link",
+                    Parameter = AdLink
+                }
+            }
+        })
+
+Window:CreateHomeTab({
+	SupportedExecutors = {},
+	DiscordInvite = "jdark", -- The Discord Invite Link. Do Not Include discord.gg/ | Only Include the code.
+	Icon = 1, -- By Default, The Icon Is The Home Icon. If You would like to change it to dashboard, replace the interger with 2
+})
+
+local Tab = Window:CreateTab({
+    Name = "Basketball: Zero",
+    Icon = "sports_basketball",
+    ImageSource = "Material",
+    ShowTitle = true
+})
+
+local ToggleAway
+local ToggleHome
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local runService = game:GetService("RunService")
+
+-- Ensure character is loaded
+character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- Predefined CFrame positions
+local homeCFrame = CFrame.new(-146.577789, 16.7091846, -297.484161, 1, 5.44571606e-07, 1.32332061e-05, -5.35923334e-07, 0.999999762, -0.000653519761, -1.3233559e-05, 0.000653519761, 0.999999762)
+local awayCFrame = CFrame.new(146.577789, 16.7089329, -297.515961, -1, -1.54816962e-06, 1.96740293e-05, -1.52984092e-06, 0.999999583, 0.000931584684, -1.96754627e-05, 0.000931584626, -0.999999583)
+
+-- Toggle Button: Lock to Away CFrame
+ToggleAway = Tab2:CreateToggle({
+    Name = "Aim Lock: Away",
+    Description = nil,
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then
+            humanoidRootPart.CFrame = awayCFrame
+            ToggleHome:SetState(false) -- Disable the other toggle
+        end
+    end
+}, "ToggleAway")
+
+-- Toggle Button: Lock to Home CFrame
+ToggleHome = Tab2:CreateToggle({
+    Name = "Aim Lock: Home",
+    Description = nil,
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then
+            humanoidRootPart.CFrame = homeCFrame
+            ToggleAway:SetState(false) -- Disable the other toggle
+        end
+    end
+}, "ToggleHome")
